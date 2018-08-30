@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Heatmap3D</title>
+	<style>
+		body {
+			background: #000;
+			margin: 0;
+			padding: 0;
+		}
+
+		canvas {
+			background: #111;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="the_canvas"></canvas>
+</body>
+<script>
+	const canv = document.getElementById("the_canvas");
+	const ctx = canv.getContext("2d");
+	canv.width = window.innerWidth - 5;
+	canv.height = window.innerHeight - 5;
+	const w = canv.width;
+	const h = canv.height;
+	const background_color = "#000";
+
+	const randomFloat = (min, max) => Math.random() * (max - min) + min;
+	const randomInt = (min, max) => Math.round(randomFloat(min, max));
+	const distFromTo = (p1, p2) => Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+
+	const points_in_x = 200;
+	const points_in_y = 100;
+	var points = [];
+
+	const balls_amount = 100;
+	const balls_max_v = 10;
+	var balls = [];
+
+	for (let y = 0; y < points_in_y; y++) {
+		for (let x = 0; x < points_in_x; x++) {
+			let new_point = {
+				x: w * x / points_in_x,
+				y: h * y / points_in_y
+			}
+			points.push(new_point);
+		}
+	}
+
+	for (let i = 0; i < balls_amount; i++) {
+		let new_ball = {
+			x: randomInt(0, w),
+			y: randomInt(0, h),
+			dx: randomFloat(-balls_max_v, balls_max_v),
+			dy: randomFloat(-balls_max_v, balls_max_v)
+		}
+		balls.push(new_ball);
+	}
+
+	setInterval(function () {
+		drawBackground();
+		moveObjects();
+		edgeBounce();
+		drawThePts();
+	}, 20);
+
+	function drawBackground() {
+		ctx.fillStyle = background_color;
+		ctx.fillRect(0, 0, canv.width, canv.height);
+	}
+
+	function moveObjects() {
+		for (let i = 0; i < balls.length; i++) {
+			balls[i].x += balls[i].dx;
+			balls[i].y += balls[i].dy;
+		}
+	}
+
+	function edgeBounce() {
+		for (let i = 0; i < balls.length; i++) {
+			if (balls[i].x < 0 || balls[i].x > w || balls[i].y < 0 || balls[i].y > h) {
+				balls[i].dx *= -1;
+				balls[i].x += balls[i].dx;
+				balls[i].dy *= -1;
+				balls[i].y += balls[i].dy;
+			}
+		}
+	}
+
+	function drawThePts() {
+		for (let i = 0; i < points.length; i++) {
+			let sum_of_dist = 0;
+
+			for (let j = 0; j < balls.length; j++) {
+				let dist = distFromTo(points[i], balls[j]);
+				let add = 300 - dist;
+				if (add < 0) add = 0;
+				sum_of_dist += add * 0.2;
+			}
+			sum_of_dist = Math.round(sum_of_dist);
+			sum_of_dist %= 360;
+
+			ctx.fillStyle = "hsl(" + sum_of_dist + ", 100%, 50%)";
+			ctx.fillRect(points[i].x, points[i].y, w / points_in_x + 1, h / points_in_y + 1);
+		}
+	}
+</script>
+
+</html>
